@@ -58,9 +58,9 @@ function OUT = FluctuationStrength_Osses2016(insig, fs, method, start_skip, end_
 % Author: Alejandro Osses, HTI, TU/e, the Netherlands, 2014-2016
 % Author: Rodrigo Garcia, HTI, TU/e, the Netherlands, 2014-2016
 % Author: Gil Felix Greco, Braunschweig 04.03.2020 - Modifications
-%     1) includes resampling to 44100 Hz, which is preferible because it 
+%     1) includes resampling to 44100 Hz, which is preferable because it 
 %        takes less time to compute than 48 kHz because of the filtering 
-%        process of IIR filters for modeling the Hweigth parameter
+%        process of IIR filters for modeling the Hweight parameter
 %     2) include possibility to choose method (stationary or time-varying) 
 %        which affects the window size
 % Author: Alejandro Osses, 10/05/2023. Appropriate scaling for the specific 
@@ -156,7 +156,7 @@ for iFrame = nFrames:-1:1
     dBFS = 94; % corresponds to 1 Pa (new default in SQAT)
     % dBFS = 100; % unit amplitude corresponds to 100 dB (AMT Toolbox 
                   % convention, default by the original authors)
-    ei   = TerhardtExcitationPatterns_v3_ML(signal,fs,dBFS);
+    ei   = TerhardtExcitationPatterns_v3(signal,fs,dBFS);
     dz   = 0.5; % Barks, frequency step
     z    = 0.5:dz:23.5; % Bark
     fc   = bark2hz(z);
@@ -414,7 +414,6 @@ params.bIdle   = 1; % v5
 %%%        
 
 params.Hweight = Get_Hweight_fluctuation(fs);
-params.Hweight = Get_Hweight_fluctuation(fs);
 params.gzi     = il_Get_gzi_fluctuation(params.Chno);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -444,8 +443,8 @@ function outsig = il_PeripheralHearingSystem_t(insig,fs)
 
 K = 2^12; % FIR filter order 
 
-% B = il_calculate_a0(fs,K);
-B = il_calculate_a0_idle(fs,K);
+B = il_calculate_a0(fs,K);
+%B = il_calculate_a0_idle(fs,K);
 
 outsig = filter(B,1,[insig zeros(size(insig, 1), K/2)], [], 2);
 outsig = outsig(:, K/2+1:end);
