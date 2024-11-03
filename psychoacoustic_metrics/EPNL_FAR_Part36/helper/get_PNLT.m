@@ -162,9 +162,9 @@ for k = 1:num_times
     end
 end
 
-%% Step 9: for each TOB from 80 Hz till 10 kHz (i.e. band 3 through 24),
+%% Steps 9 & 10: for each TOB from 80 Hz till 10 kHz (i.e. band 3 through 24),
 % determine the tone correction factor C(i,k) from the SPL differences F(i,k), and Table A36-2
-% Step 10 is included here also
+% (Step 10 is included here also)
 
 C = zeros(num_freqs,num_times);
 Cmax = zeros(num_times,1);
