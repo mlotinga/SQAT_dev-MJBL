@@ -1,4 +1,4 @@
-function OUT = Loudness_ISO532_1(insig, fs, field, method, time_skip, show)
+function OUT = Loudness_ISO532_1(insig, fs, field, method, start_skip, end_skip, show)
 % function OUT = Loudness_ISO532_1(insig, fs, field, method, time_skip, show)
 %
 %  Zwicker Loudness model according to ISO 532-1 for stationary
@@ -24,8 +24,10 @@ function OUT = Loudness_ISO532_1(insig, fs, field, method, time_skip, show)
 %   1 = stationary (from audio file)
 %   2 = time varying (from audio file)
 %
-%   time_skip : integer
-%   skip start of the signal in <time_skip> seconds for level (stationary signals) and statistics (stationary and time-varying signals) calculations
+%   start_skip : number
+%   end_skip : number
+%   skip start/end of the signal in seconds for level (stationary signals)
+%       and statistics (stationary and time-varying signals) calculations
 %
 %   show : logical(boolean)
 %   optional parameter for figures (results) display
@@ -76,7 +78,7 @@ if nargin == 0
     return;
 end
 
-if nargin < 6
+if nargin < 7
     if nargout == 0
         show = 1;
     else
@@ -200,15 +202,16 @@ switch method
                     end
 
                 case {1,'stationary'} % stationary from audio signal
-                    NumSkip = floor(time_skip * fs);
-                    smoothedaudio = zeros(len-NumSkip,28);
+                    NumSkipStart = floor(start_skip * fs);
+                    NumSkipEnd = floor(end_skip * fs);
+                    smoothedaudio = zeros(len-NumSkipStart-NumSkipEnd,28);
 
-                    if NumSkip > len/2
+                    if (NumSkipStart + NumSkipEnd) > len/2
                         warndlg('time signal too short');
                     end
 
-                    if NumSkip == 0; NumSkip = 1; end
-                    smoothedaudio(1:len-NumSkip,i) = filteredaudio(NumSkip:len-1,i);
+                    if NumSkipStart == 0; NumSkipStart = 1; end
+                    smoothedaudio(1+NumSkipEnd:len-NumSkipStart,i) = filteredaudio(NumSkipStart:len-1-NumSkipEnd,i);
                     %         ThirdOctaveLevel(NumSamplesLevel,i) = 10*log10((sum(smoothedaudio(:,i))/len+TINY_VALUE)/I_REF);
                     ThirdOctaveLevel(NumSamplesLevel,i) = 10*log10((sum(smoothedaudio(:,i)/len)+TINY_VALUE)/I_REF); % <----- modified from original by gfg
 
@@ -732,27 +735,28 @@ if method == 2 % time-varying from audio signal
     % statistics from Time-varying Loudness (sone)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    [~,idx] = min( abs(OUT.time-time_skip) ); % find idx of time_skip on time vector
+    [~,idx] = min( abs(OUT.time - start_skip) ); % find idx of start_skip on time vector
+    [~,idxEnd] = min( abs(OUT.time - (max(OUT.time) - end_skip)) ); % find idx of end_skip on time vector
 
-    OUT.Nmax = max(Total_Loudness(idx:end));
-    OUT.Nmin = min(Total_Loudness(idx:end));
-    OUT.Nmean = mean(Total_Loudness(idx:end));
-    OUT.Nstd = std(Total_Loudness(idx:end));
-    OUT.N1 = get_percentile(Total_Loudness(idx:end),1);
-    OUT.N2 = get_percentile(Total_Loudness(idx:end),2);
-    OUT.N3 = get_percentile(Total_Loudness(idx:end),3);
-    OUT.N4 = get_percentile(Total_Loudness(idx:end),4);
-    OUT.N5 = get_percentile(Total_Loudness(idx:end),5);
-    OUT.N10 = get_percentile(Total_Loudness(idx:end),10);
-    OUT.N20 = get_percentile(Total_Loudness(idx:end),20);
-    OUT.N30 = get_percentile(Total_Loudness(idx:end),30);
-    OUT.N40 = get_percentile(Total_Loudness(idx:end),40);
-    OUT.N50 = median(Total_Loudness(idx:end));
-    OUT.N60 = get_percentile(Total_Loudness(idx:end),60);
-    OUT.N70 = get_percentile(Total_Loudness(idx:end),70);
-    OUT.N80 = get_percentile(Total_Loudness(idx:end),80);
-    OUT.N90 = get_percentile(Total_Loudness(idx:end),90);
-    OUT.N95 = get_percentile(Total_Loudness(idx:end),95);
+    OUT.Nmax = max(Total_Loudness(idx:idxEnd));
+    OUT.Nmin = min(Total_Loudness(idx:idxEnd));
+    OUT.Nmean = mean(Total_Loudness(idx:idxEnd));
+    OUT.Nstd = std(Total_Loudness(idx:idxEnd));
+    OUT.N1 = get_percentile(Total_Loudness(idx:idxEnd),1);
+    OUT.N2 = get_percentile(Total_Loudness(idx:idxEnd),2);
+    OUT.N3 = get_percentile(Total_Loudness(idx:idxEnd),3);
+    OUT.N4 = get_percentile(Total_Loudness(idx:idxEnd),4);
+    OUT.N5 = get_percentile(Total_Loudness(idx:idxEnd),5);
+    OUT.N10 = get_percentile(Total_Loudness(idx:idxEnd),10);
+    OUT.N20 = get_percentile(Total_Loudness(idx:idxEnd),20);
+    OUT.N30 = get_percentile(Total_Loudness(idx:idxEnd),30);
+    OUT.N40 = get_percentile(Total_Loudness(idx:idxEnd),40);
+    OUT.N50 = median(Total_Loudness(idx:idxEnd));
+    OUT.N60 = get_percentile(Total_Loudness(idx:idxEnd),60);
+    OUT.N70 = get_percentile(Total_Loudness(idx:idxEnd),70);
+    OUT.N80 = get_percentile(Total_Loudness(idx:idxEnd),80);
+    OUT.N90 = get_percentile(Total_Loudness(idx:idxEnd),90);
+    OUT.N95 = get_percentile(Total_Loudness(idx:idxEnd),95);
     OUT.N_ratio=OUT.N5/OUT.N95; % ratio between N5/N95 (1.1 (stationary)> N_ratio>1.1 (time varying)
 
     %% **********************************************************************

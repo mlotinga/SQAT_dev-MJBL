@@ -1,4 +1,4 @@
-function OUT = Sharpness_DIN45692_from_wavfile(wavfilename, dBFS, weight_type, LoudnessField, LoudnessMethod, time_skip, show_sharpness, show_loudness)
+function OUT = Sharpness_DIN45692_from_wavfile(wavfilename, dBFS, weight_type, LoudnessField, LoudnessMethod, start_skip, end_skip, show_sharpness, show_loudness)
 % function OUT = Sharpness_DIN45692_from_wavfile(wavfilename, dBFS, weight_type, LoudnessField, LoudnessMethod, time_skip, show_sharpness, show_loudness)
 %
 %  Stationary and time-varying sharpness calculation according to DIN 45692
@@ -38,8 +38,10 @@ function OUT = Sharpness_DIN45692_from_wavfile(wavfilename, dBFS, weight_type, L
 %        calculation: stationary (from input 1/3 octave unweighted SPL)=0 (not 
 %        accepted in this context); stationary = 1; time varying = 2;
 %
-%   time_skip : integer
-%   skip start of the signal in <time_skip> seconds for statistics calculations (method=1 (time-varying) only)
+%   start_skip : number
+%   end_skip : number
+%   skip start/end of the signal in seconds for statistics
+%        calculations (method=1 (time-varying) only)
 %
 %   show_loudness : logical(boolean)
 %   optional parameter to display loudness results (only method=1)
@@ -83,24 +85,29 @@ if nargin == 0
     help Sharpness_DIN45692_from_wavfile;
     return;
 end
-if nargin < 8
+if nargin < 9
     if nargout == 0
         show_loudness = 1;
     else
         show_loudness = 0;
     end
 end
-if nargin < 7
+if nargin < 8
     if nargout == 0
         show_sharpness = 1;
     else
         show_sharpness = 0;
     end
 end
+if nargin < 7
+    pars = psychoacoustic_metrics_get_defaults('Sharpness_DIN45692');
+    end_skip = pars.end_skip;
+    fprintf('\n%s.m: Default end_skip value = %.0f is being used\n',mfilename,pars.end_skip);
+end
 if nargin < 6
     pars = psychoacoustic_metrics_get_defaults('Sharpness_DIN45692');
-    time_skip = pars.time_skip;
-    fprintf('\n%s.m: Default time_skip value = %.0f is being used\n',mfilename,pars.time_skip);
+    start_skip = pars.start_skip;
+    fprintf('\n%s.m: Default start_skip value = %.0f is being used\n',mfilename,pars.start_skip);
 end
 if nargin < 5
     pars = psychoacoustic_metrics_get_defaults('Sharpness_DIN45692');
@@ -125,7 +132,7 @@ end
 gain_factor = 10^((dBFS-94)/20);
 insig = gain_factor*insig;
 
-OUT = Sharpness_DIN45692(insig, fs, weight_type, LoudnessField, LoudnessMethod, time_skip, show_sharpness, show_loudness);
+OUT = Sharpness_DIN45692(insig, fs, weight_type, LoudnessField, LoudnessMethod, start_skip, end_skip, show_sharpness, show_loudness);
 
 end % End of file
 

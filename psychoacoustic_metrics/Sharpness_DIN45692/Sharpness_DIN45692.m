@@ -1,4 +1,4 @@
-function OUT = Sharpness_DIN45692(insig, fs, weight_type, LoudnessField, LoudnessMethod, time_skip, show_sharpness, show_loudness)
+function OUT = Sharpness_DIN45692(insig, fs, weight_type, LoudnessField, LoudnessMethod, start_skip, end_skip, show_sharpness, show_loudness)
 % function OUT = Sharpness_DIN45692(insig, fs, weight_type, LoudnessField, LoudnessMethod, time_skip, show_sharpness, show_loudness)
 %
 %  Stationary and time-varying sharpness calculation according to DIN 45692
@@ -31,8 +31,9 @@ function OUT = Sharpness_DIN45692(insig, fs, weight_type, LoudnessField, Loudnes
 %       calculation: stationary (from input 1/3 octave unweighted SPL)=0 (not 
 %       accepted in this context); stationary = 1; time varying = 2;
 %
-%   time_skip : integer
-%   skip start of the signal in <time_skip> seconds for statistics 
+%   start_skip : number
+%   end_skip : number
+%   skip start/end of the signal in seconds for statistics
 %        calculations (method=1 (time-varying) only)
 %
 %   show_loudness : logical(boolean)
@@ -72,14 +73,14 @@ if nargin == 0
     help Sharpness_DIN45692;
     return;
 end
-if nargin < 8
+if nargin < 9
     if nargout == 0
         show_loudness = 1;
     else
         show_loudness = 0;
     end
 end
-if nargin < 7
+if nargin < 8
     if nargout == 0
         show_sharpness = 1;
     else
@@ -92,7 +93,8 @@ if LoudnessMethod==1 % stationary loudness calculation
     L = Loudness_ISO532_1(insig, fs,... % input signal and sampling freq.
                       LoudnessField,... % free field = 0; diffuse field = 1;
                      LoudnessMethod,... % method used for loudness calculation: stationary (from input 1/3 octave unweighted SPL)=0; stationary = 1; time varying = 2;
-                          time_skip,... % time_skip
+                         start_skip,... % start time skip
+                           end_skip,... % end time skip
                       show_loudness);   % show loudness results
     
     n = size(L.SpecificLoudness,2);
@@ -108,7 +110,8 @@ elseif LoudnessMethod==2 % time-varying loudness calculation
     L = Loudness_ISO532_1(insig, fs,... % input signal and sampling freq.
                       LoudnessField,... % free field = 0; diffuse field = 1;
                      LoudnessMethod,... % method used for loudness calculation: stationary (from input 1/3 octave unweighted SPL)=0; stationary = 1; time varying = 2;
-                          time_skip,... % time_skip
+                                  0,... % start time skip (set to 0 as the time skip is done on the calculated time-dependent sharpness)
+                                  0,... % end time skip (set to 0 as the time skip is done on the calculated time-dependent sharpness)
                       show_loudness);   % show loudness results
     
     n = size(L.InstantaneousSpecificLoudness,2);
@@ -163,27 +166,28 @@ if LoudnessMethod==2 % (time-varying sharpness)
     
     % statistics from Time-varying sharpness (acum)
     
-    [~,idx] = min( abs(OUT.time-time_skip) ); % find idx of time_skip on time vector
-    
-    OUT.Smax = max(s(idx:end));
-    OUT.Smin = min(s(idx:end));
-    OUT.Smean = mean(s(idx:end));
-    OUT.Sstd = std(s(idx:end));
-    OUT.S1 = get_percentile(s(idx:end),1);
-    OUT.S2 = get_percentile(s(idx:end),2);
-    OUT.S3 = get_percentile(s(idx:end),3);
-    OUT.S4 = get_percentile(s(idx:end),4);
-    OUT.S5 = get_percentile(s(idx:end),5);
-    OUT.S10 = get_percentile(s(idx:end),10);
-    OUT.S20 = get_percentile(s(idx:end),20);
-    OUT.S30 = get_percentile(s(idx:end),30);
-    OUT.S40 = get_percentile(s(idx:end),40);
-    OUT.S50 = median(s(idx:end));
-    OUT.S60 = get_percentile(s(idx:end),60);
-    OUT.S70 = get_percentile(s(idx:end),70);
-    OUT.S80 = get_percentile(s(idx:end),80);
-    OUT.S90 = get_percentile(s(idx:end),90);
-    OUT.S95 = get_percentile(s(idx:end),95);
+    [~,idx] = min( abs(OUT.time - start_skip) ); % find idx of start_skip on time vector
+    [~,idxEnd] = min( abs(OUT.time - (max(OUT.time) - end_skip)) ); % find idx of end_skip on time vector
+
+    OUT.Smax = max(s(idx:idxEnd));
+    OUT.Smin = min(s(idx:idxEnd));
+    OUT.Smean = mean(s(idx:idxEnd));
+    OUT.Sstd = std(s(idx:idxEnd));
+    OUT.S1 = get_percentile(s(idx:idxEnd),1);
+    OUT.S2 = get_percentile(s(idx:idxEnd),2);
+    OUT.S3 = get_percentile(s(idx:idxEnd),3);
+    OUT.S4 = get_percentile(s(idx:idxEnd),4);
+    OUT.S5 = get_percentile(s(idx:idxEnd),5);
+    OUT.S10 = get_percentile(s(idx:idxEnd),10);
+    OUT.S20 = get_percentile(s(idx:idxEnd),20);
+    OUT.S30 = get_percentile(s(idx:idxEnd),30);
+    OUT.S40 = get_percentile(s(idx:idxEnd),40);
+    OUT.S50 = median(s(idx:idxEnd));
+    OUT.S60 = get_percentile(s(idx:idxEnd),60);
+    OUT.S70 = get_percentile(s(idx:idxEnd),70);
+    OUT.S80 = get_percentile(s(idx:idxEnd),80);
+    OUT.S90 = get_percentile(s(idx:idxEnd),90);
+    OUT.S95 = get_percentile(s(idx:idxEnd),95);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Show plots (time-varying)
